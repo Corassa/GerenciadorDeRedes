@@ -5,17 +5,31 @@
  */
 package gerenciadorderedes.gui;
 
+import com.sun.glass.ui.Application;
 import java.awt.Color;
 import java.awt.FlowLayout;
 import java.awt.Label;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.net.SocketException;
+import java.net.UnknownHostException;
+import java.util.Enumeration;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
+import org.snmp4j.*;
+import jpcap.JpcapCaptor;
+import jpcap.NetworkInterfaceAddress;
+import java.io.*;
+import java.net.*;
+import java.util.*;
+import static java.lang.System.out;
+import javax.swing.JFileChooser;
 
 /**
  *
@@ -40,15 +54,20 @@ public class Principal extends javax.swing.JFrame {
     private void initComponents() {
 
         jInternalFrame1 = new javax.swing.JInternalFrame();
+        jFileChooser1 = new javax.swing.JFileChooser();
         jButtonHome = new javax.swing.JButton();
         jButtonNetworks = new javax.swing.JButton();
         jButtonNetMonitor = new javax.swing.JButton();
         jButtonPreferencias = new javax.swing.JButton();
         jLabel1 = new javax.swing.JLabel();
-        jPanelPrincipal = new javax.swing.JPanel();
-        jLabel2 = new javax.swing.JLabel();
+        jToggleButton1 = new javax.swing.JToggleButton();
+        jScrollPane3 = new javax.swing.JScrollPane();
+        textPrincipal = new javax.swing.JTextArea();
+        jProgressBar = new javax.swing.JProgressBar();
+        status = new javax.swing.JLabel();
         jMenuBar1 = new javax.swing.JMenuBar();
         jMenu1 = new javax.swing.JMenu();
+        jMenuItem2 = new javax.swing.JMenuItem();
         jMenuItem1 = new javax.swing.JMenuItem();
         jMenu2 = new javax.swing.JMenu();
 
@@ -67,7 +86,7 @@ public class Principal extends javax.swing.JFrame {
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
-        jButtonHome.setText("Home");
+        jButtonHome.setText("Home*");
         jButtonHome.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jButtonHomeActionPerformed(evt);
@@ -81,42 +100,45 @@ public class Principal extends javax.swing.JFrame {
             }
         });
 
-        jButtonNetMonitor.setText("Network Monitor");
+        jButtonNetMonitor.setText("Network Monitor*");
         jButtonNetMonitor.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jButtonNetMonitorActionPerformed(evt);
             }
         });
 
-        jButtonPreferencias.setText("Preferências");
+        jButtonPreferencias.setText("Preferências*");
         jButtonPreferencias.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jButtonPreferenciasActionPerformed(evt);
             }
         });
 
-        jLabel1.setBackground(new java.awt.Color(204, 204, 204));
-        jLabel1.setFont(new java.awt.Font("Arial", 1, 11)); // NOI18N
+        jLabel1.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
+        jLabel1.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         jLabel1.setText("Gerenciador de Redes Wi-fi");
 
-        jLabel2.setText("jLabel2");
+        jToggleButton1.setText("Escanear Rede");
+        jToggleButton1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jToggleButton1ActionPerformed(evt);
+            }
+        });
 
-        javax.swing.GroupLayout jPanelPrincipalLayout = new javax.swing.GroupLayout(jPanelPrincipal);
-        jPanelPrincipal.setLayout(jPanelPrincipalLayout);
-        jPanelPrincipalLayout.setHorizontalGroup(
-            jPanelPrincipalLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanelPrincipalLayout.createSequentialGroup()
-                .addComponent(jLabel2)
-                .addGap(0, 311, Short.MAX_VALUE))
-        );
-        jPanelPrincipalLayout.setVerticalGroup(
-            jPanelPrincipalLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanelPrincipalLayout.createSequentialGroup()
-                .addComponent(jLabel2)
-                .addGap(0, 0, Short.MAX_VALUE))
-        );
+        textPrincipal.setColumns(20);
+        textPrincipal.setRows(5);
+        jScrollPane3.setViewportView(textPrincipal);
 
         jMenu1.setText("File");
+
+        jMenuItem2.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_S, java.awt.event.InputEvent.CTRL_MASK));
+        jMenuItem2.setText("Salvar");
+        jMenuItem2.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jMenuItem2ActionPerformed(evt);
+            }
+        });
+        jMenu1.add(jMenuItem2);
 
         jMenuItem1.setText("Sair");
         jMenuItem1.addActionListener(new java.awt.event.ActionListener() {
@@ -141,20 +163,27 @@ public class Principal extends javax.swing.JFrame {
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jLabel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addGap(0, 0, Short.MAX_VALUE)
+                        .addComponent(status)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jProgressBar, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                             .addComponent(jButtonNetMonitor, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(jButtonNetworks, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(jButtonHome, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(jButtonPreferencias, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                            .addComponent(jButtonPreferencias, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(jToggleButton1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jPanelPrincipal, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                        .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 521, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap()
+                .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 37, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
@@ -163,10 +192,16 @@ public class Principal extends javax.swing.JFrame {
                         .addComponent(jButtonNetworks)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jButtonNetMonitor)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 232, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jToggleButton1)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 189, Short.MAX_VALUE)
                         .addComponent(jButtonPreferencias))
-                    .addComponent(jPanelPrincipal, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addContainerGap())
+                    .addComponent(jScrollPane3))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(jProgressBar, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(status))
+                .addGap(5, 5, 5))
         );
 
         pack();
@@ -174,11 +209,44 @@ public class Principal extends javax.swing.JFrame {
 
     private void jButtonHomeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonHomeActionPerformed
         BufferedImage myPicture;
-        jLabel2.setText("teste");
     }//GEN-LAST:event_jButtonHomeActionPerformed
+
+    public static String hex2String(byte[] input) {
+        String output = "";
+        for (int i = 0; i < input.length - 1; i++) {
+            output += Integer.toHexString(input[i] & 0xff) + ":";
+        }
+        output += Integer.toHexString(input[input.length - 1] & 0xff);
+        return output;
+    }
+
 
     private void jButtonNetworksActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonNetworksActionPerformed
 
+        Application.run(() -> {
+            status.setText("Executando...");
+            jProgressBar.setMaximum(100);
+            Process exec;
+            try {
+                exec = Runtime.getRuntime().exec("netsh wlan show all");
+                jProgressBar.setValue(40);
+                BufferedReader input = new BufferedReader(new InputStreamReader(exec.getInputStream()));
+                String lineOut;
+                while ((lineOut = input.readLine()) != null) {
+                    textPrincipal.setText(textPrincipal.getText() + lineOut + "\n");
+                }
+                input.close();
+                if (exec.waitFor() == 0) {
+                    System.out.println("Executado.");
+                } else {
+                    System.out.println("ERRO");
+                }
+
+                jProgressBar.setValue(100);
+            } catch (IOException | InterruptedException e) {
+            }
+            status.setText("Finalizado");
+        });
     }//GEN-LAST:event_jButtonNetworksActionPerformed
 
     private void jButtonNetMonitorActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonNetMonitorActionPerformed
@@ -192,6 +260,60 @@ public class Principal extends javax.swing.JFrame {
     private void jMenuItem1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem1ActionPerformed
         System.exit(0);
     }//GEN-LAST:event_jMenuItem1ActionPerformed
+
+    private void jToggleButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jToggleButton1ActionPerformed
+
+        Application.run(() -> {
+            status.setText("Executando...");
+            jProgressBar.setMinimum(0);
+            jProgressBar.setValue(1);
+            jProgressBar.setMaximum(255);
+            InetAddress localhost;
+            try {
+                localhost = InetAddress.getLocalHost();
+
+                byte[] ip = localhost.getAddress();
+
+                for (int i = 1; i <= 254; i++) {
+                    jProgressBar.setValue(i);
+                    ip[3] = (byte) i;
+                    InetAddress address = InetAddress.getByAddress(ip);
+                    if (address.isReachable(1000)) {
+                        textPrincipal.setText(textPrincipal.getText() + address + " maquina esta ligada e pode ser pingada\n");
+                        //System.out.println(address + " maquina esta ligada e pode ser pingada");
+                    } else if (!address.getHostAddress().equals(address.getHostName())) {
+                        textPrincipal.setText(textPrincipal.getText() + address + " maquina reconhecida por um DNSLookup\n");
+                        //System.out.println(address + " maquina reconhecida por um DNSLookup");
+                    } else {
+                        textPrincipal.setText(textPrincipal.getText() + address + " o endereço de host e o nome do host são iguais, o host name não pode ser resolvido.\n");
+                    }
+                }
+            } catch (UnknownHostException ex) {
+                Logger.getLogger(Principal.class.getName()).log(Level.SEVERE, null, ex);
+            } catch (IOException ex) {
+                Logger.getLogger(Principal.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            status.setText("Finalizado");
+        });
+
+    }//GEN-LAST:event_jToggleButton1ActionPerformed
+
+    private void jMenuItem2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem2ActionPerformed
+        int returnVal = jFileChooser1.showOpenDialog(this);
+        if (returnVal == JFileChooser.APPROVE_OPTION) {
+            File file = jFileChooser1.getSelectedFile();
+            try {
+                // What to do with the file, e.g. display it in a TextArea
+                BufferedWriter saida = new BufferedWriter(new FileWriter(file));
+                saida.write(textPrincipal.getText());
+                saida.close();
+            } catch (IOException ex) {
+                System.out.println("problem accessing file" + file.getAbsolutePath());
+            }
+        } else {
+            System.out.println("File access cancelled by user.");
+        }
+    }//GEN-LAST:event_jMenuItem2ActionPerformed
 
     /**
      * @param args the command line arguments
@@ -233,13 +355,18 @@ public class Principal extends javax.swing.JFrame {
     private javax.swing.JButton jButtonNetMonitor;
     private javax.swing.JButton jButtonNetworks;
     private javax.swing.JButton jButtonPreferencias;
+    private javax.swing.JFileChooser jFileChooser1;
     private javax.swing.JInternalFrame jInternalFrame1;
     private javax.swing.JLabel jLabel1;
-    private javax.swing.JLabel jLabel2;
     private javax.swing.JMenu jMenu1;
     private javax.swing.JMenu jMenu2;
     private javax.swing.JMenuBar jMenuBar1;
     private javax.swing.JMenuItem jMenuItem1;
-    private javax.swing.JPanel jPanelPrincipal;
+    private javax.swing.JMenuItem jMenuItem2;
+    private javax.swing.JProgressBar jProgressBar;
+    private javax.swing.JScrollPane jScrollPane3;
+    private javax.swing.JToggleButton jToggleButton1;
+    private javax.swing.JLabel status;
+    private javax.swing.JTextArea textPrincipal;
     // End of variables declaration//GEN-END:variables
 }
